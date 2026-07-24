@@ -100,6 +100,25 @@ export function getThemeNames(theme: Theme | Record<string, Theme>) {
   );
 }
 
+// Declarations for the `--shiki-*` custom properties Shiki writes for the
+// non-default themes of a multi-theme config.
+const shikiCustomPropertyRegex = /(?:^|;)\s*(--shiki-[\w-]+\s*:[^;]*)/g;
+
+/**
+ * Extracts the `--shiki-*` custom-property declarations from an inline
+ * style string, dropping everything else.
+ *
+ * `<pre>` also carries declarations that are none of our business — most
+ * notably whatever user transformers put there — so copying its whole
+ * style elsewhere would move unrelated layout with it.
+ */
+export function getShikiCustomProperties(style: string) {
+  return Array.from(
+    style.matchAll(shikiCustomPropertyRegex),
+    ([, declaration]) => declaration.trim(),
+  );
+}
+
 export function replaceLineClass(element: Element) {
   if (
     Array.isArray(element.properties?.className) &&

@@ -174,6 +174,30 @@ describe('Multiple theme', () => {
   });
 });
 
+it('only mirrors the theme variables from <pre> onto <code>', async () => {
+  const html = await getHtml('```js\nconst answer = 42;\n```', {
+    theme: getTheme(true),
+    transformers: [
+      {
+        name: 'test-pre-padding',
+        pre(node) {
+          node.properties.style = `${node.properties.style ?? ''};padding:123px`;
+        },
+      },
+    ],
+  });
+
+  const preAttributes = html.match(/<pre([^>]*)>/)?.[1] ?? '';
+  const codeAttributes = html.match(/<code([^>]*)>/)?.[1] ?? '';
+
+  // The theme variables are mirrored so `code[data-theme*=' ']` can read them
+  expect(codeAttributes).toContain('--shiki-light-bg');
+  expect(codeAttributes).toContain('--shiki-dark-bg');
+  // ...but a transformer's own styling stays where the transformer put it
+  expect(preAttributes).toContain('padding:123px');
+  expect(codeAttributes).not.toContain('padding');
+});
+
 it("highlighter caches don't overwrite each other", async () => {
   const [html1, html2] = await Promise.all([
     getHtml('`[1, 2, 3]{:js}`', { theme: 'github-light' }),

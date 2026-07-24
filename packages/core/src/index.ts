@@ -21,6 +21,7 @@ import {
   getInlineCodeLang,
   isInlineCode,
   getThemeNames,
+  getShikiCustomProperties,
   replaceLineClass,
   getLineId,
 } from './utils';
@@ -114,14 +115,22 @@ function apply(
     // <code> as well, so the documented `code[data-theme*=' ']` selector can
     // read the theme background variables directly instead of relying on them
     // inheriting from <pre>. See rehype-pretty/rehype-pretty-code#222.
+    //
+    // Only those custom properties are copied: <pre> also carries
+    // declarations owned by someone else, such as a transformer's own
+    // styling, which must not be duplicated onto <code>.
     if (
       keepBackground &&
       themeNames.length > 1 &&
       typeof pre.properties.style === 'string'
     ) {
-      code.properties.style = code.properties.style
-        ? `${pre.properties.style};${code.properties.style}`
-        : `${pre.properties.style};`;
+      const themeProperties = getShikiCustomProperties(pre.properties.style);
+      if (themeProperties.length > 0) {
+        const declarations = `${themeProperties.join(';')};`;
+        code.properties.style = code.properties.style
+          ? `${declarations}${code.properties.style}`
+          : declarations;
+      }
     }
 
     if (grid) {
